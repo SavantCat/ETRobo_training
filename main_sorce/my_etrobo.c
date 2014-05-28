@@ -1,192 +1,236 @@
 /**
  ******************************************************************************
- **	ÔøΩtÔøΩ@ÔøΩCÔøΩÔøΩÔøΩÔøΩ : sample.c
+ **	ÉtÉ@ÉCÉãñº : sample.c
  **
- **	ÔøΩTÔøΩv : 2ÔøΩ÷ì|ÔøΩÔøΩÔøΩUÔøΩqÔøΩÔøΩÔøΩCÔøΩÔøΩÔøΩgÔøΩÔøΩÔøΩ[ÔøΩXÔøΩÔøΩÔøΩ{ÔøΩbÔøΩgÔøΩÔøΩTOPPERS/ATK1(OSEK)ÔøΩpCÔøΩTÔøΩÔøΩÔøΩvÔøΩÔøΩÔøΩvÔøΩÔøΩÔøΩOÔøΩÔøΩÔøΩÔøΩ
+ **	äTóv : 2ó÷ì|óßêUéqÉâÉCÉìÉgÉåÅ[ÉXÉçÉ{ÉbÉgÇÃTOPPERS/ATK1(OSEK)ópCÉTÉìÉvÉãÉvÉçÉOÉâÉÄ
  **
- ** ÔøΩÔøΩÔøΩL : sample_c3 (sample_c2ÔøΩ…ëÔøΩÔøΩsÔøΩÃÇÃäÔøΩÔøΩSÔøΩÔøΩÔøΩ~ÔøΩ@ÔøΩ\ÔøΩÔøΩÔøΩ«âÔøΩ)
+ ** íçãL : sample_c3 (sample_c2Ç…ëñçsëÃÇÃäÆëSí‚é~ã@î\Çí«â¡)
  ******************************************************************************
  **/
 #include "kernel.h"
 #include "kernel_id.h"
 #include "ecrobot_interface.h"
-#include "balancer.h" /* ÔøΩ|ÔøΩÔøΩÔøΩUÔøΩqÔøΩÔøΩÔøΩÔøΩÔøΩpÔøΩwÔøΩbÔøΩ_ÔøΩtÔøΩ@ÔøΩCÔøΩÔøΩ */
+#include "balancer.h" /* ì|óßêUéqêßå‰ópÉwÉbÉ_ÉtÉ@ÉCÉã */
 
 
-/* ÔøΩÔøΩÔøΩLÔøΩÃÉ}ÔøΩNÔøΩÔøΩÔøΩÕå¬ëÔøΩ/ÔøΩ¬ãÔøΩÔøΩ…çÔøΩÔøΩÌÇπÔøΩƒïœçXÔøΩÔøΩÔøΩÔøΩÔøΩKÔøΩvÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ‹ÇÔøΩ */
-/* sample_c1ÔøΩ}ÔøΩNÔøΩÔøΩ */
-#define GYRO_OFFSET  605 /* ÔøΩWÔøΩÔøΩÔøΩCÔøΩÔøΩÔøΩZÔøΩÔøΩÔøΩTÔøΩIÔøΩtÔøΩZÔøΩbÔøΩgÔøΩl(ÔøΩpÔøΩÔøΩÔøΩx0[deg/sec]ÔøΩÔøΩ) */
-#define LIGHT_WHITE	 500 /* ÔøΩÔøΩÔøΩFÔøΩÃåÔøΩÔøΩZÔøΩÔøΩÔøΩTÔøΩl */
-#define LIGHT_BLACK	 700 /* ÔøΩÔøΩÔøΩFÔøΩÃåÔøΩÔøΩZÔøΩÔøΩÔøΩTÔøΩl */
-/* sample_c2ÔøΩ}ÔøΩNÔøΩÔøΩ */
-#define SONAR_ALERT_DISTANCE 30 /* ÔøΩÔøΩÔøΩÔøΩÔøΩgÔøΩZÔøΩÔøΩÔøΩTÔøΩ…ÇÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩQÔøΩÔøΩÔøΩÔøΩÔøΩmÔøΩÔøΩÔøΩÔøΩ[cm] */
-/* sample_c3ÔøΩ}ÔøΩNÔøΩÔøΩ */
-#define TAIL_ANGLE_STAND_UP 108 /* ÔøΩÔøΩÔøΩSÔøΩÔøΩÔøΩ~ÔøΩÔøΩÔøΩÃäpÔøΩx[ÔøΩx] */
-#define TAIL_ANGLE_DRIVE      3 /* ÔøΩoÔøΩÔøΩÔøΩÔøΩÔøΩXÔøΩÔøΩÔøΩsÔøΩÔøΩÔøΩÃäpÔøΩx[ÔøΩx] */
-#define P_GAIN             2.5F /* ÔøΩÔøΩÔøΩSÔøΩÔøΩÔøΩ~ÔøΩpÔøΩÔøΩÔøΩ[ÔøΩ^ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩWÔøΩÔøΩ */
-#define PWM_ABS_MAX          60 /* ÔøΩÔøΩÔøΩSÔøΩÔøΩÔøΩ~ÔøΩpÔøΩÔøΩÔøΩ[ÔøΩ^ÔøΩÔøΩÔøΩÔøΩPWMÔøΩÔøΩÔøΩŒç≈ëÔøΩÔøΩl */
+/* â∫ãLÇÃÉ}ÉNÉçÇÕå¬ëÃ/ä¬ã´Ç…çáÇÌÇπÇƒïœçXÇ∑ÇÈïKóvÇ™Ç†ÇËÇ‹Ç∑ */
+/* sample_c1É}ÉNÉç */
+#define GYRO_OFFSET  605 /* ÉWÉÉÉCÉçÉZÉìÉTÉIÉtÉZÉbÉgíl(äpë¨ìx0[deg/sec]éû) */
+#define LIGHT_WHITE	 500 /* îíêFÇÃåıÉZÉìÉTíl */
+#define LIGHT_BLACK	 700 /* çïêFÇÃåıÉZÉìÉTíl */
+/* sample_c2É}ÉNÉç */
+#define SONAR_ALERT_DISTANCE 30 /* í¥âπîgÉZÉìÉTÇ…ÇÊÇÈè·äQï®åüímãóó£[cm] */
+/* sample_c3É}ÉNÉç */
+#define TAIL_ANGLE_STAND_UP 110 /* äÆëSí‚é~éûÇÃäpìx[ìx] */
+#define TAIL_ANGLE_DRIVE      3 /* ÉoÉâÉìÉXëñçséûÇÃäpìx[ìx] */
+#define P_GAIN             2.5F /* äÆëSí‚é~ópÉÇÅ[É^êßå‰î‰ó·åWêî */
+#define PWM_ABS_MAX          60 /* äÆëSí‚é~ópÉÇÅ[É^êßå‰PWMê‚ëŒç≈ëÂíl */
 
-/* ÔøΩ÷êÔøΩÔøΩvÔøΩÔøΩÔøΩgÔøΩ^ÔøΩCÔøΩvÔøΩÈåæ */
+//í«â¡ï™
+#define STOP_ETROBO 800
+#define TAIL_ANGL_STOP 60
+
+/* ä÷êîÉvÉçÉgÉ^ÉCÉvêÈåæ */
 static int sonar_alert(void);
 static void tail_control(signed int angle);
 
-//ÔøΩOÔøΩÔøΩÔøΩ[ÔøΩoÔøΩÔøΩÔøΩœêÔøΩ
-
-
-
 //*****************************************************************************
-// ÔøΩ÷êÔøΩÔøΩÔøΩ : ecrobot_device_initialize
-// ÔøΩÔøΩÔøΩÔøΩ : ÔøΩ»ÇÔøΩ
-// ÔøΩﬂÇÔøΩÔøΩl : ÔøΩ»ÇÔøΩ
-// ÔøΩTÔøΩv : ECROBOTÔøΩfÔøΩoÔøΩCÔøΩXÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩtÔøΩbÔøΩNÔøΩ÷êÔøΩ
+// ä÷êîñº : ecrobot_device_initialize
+// à¯êî : Ç»Çµ
+// ñﬂÇËíl : Ç»Çµ
+// äTóv : ECROBOTÉfÉoÉCÉXèâä˙âªèàóùÉtÉbÉNä÷êî
 //*****************************************************************************
-
-
 void ecrobot_device_initialize()
 {
-	ecrobot_set_light_sensor_active(NXT_PORT_S3); /* ÔøΩÔøΩÔøΩZÔøΩÔøΩÔøΩTÔøΩ‘êFLEDÔøΩÔøΩON */
-	ecrobot_init_sonar_sensor(NXT_PORT_S2); /* ÔøΩÔøΩÔøΩÔøΩÔøΩgÔøΩZÔøΩÔøΩÔøΩT(I2CÔøΩ êM)ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ */
-	nxt_motor_set_count(NXT_PORT_A, 0); /* ÔøΩÔøΩÔøΩSÔøΩÔøΩÔøΩ~ÔøΩpÔøΩÔøΩÔøΩ[ÔøΩ^ÔøΩGÔøΩÔøΩÔøΩRÔøΩ[ÔøΩ_ÔøΩÔøΩÔøΩZÔøΩbÔøΩg */
-
-
-	
-
-	/*
-	*
-	*
-	*
-	*
-	*/
-
+	ecrobot_set_light_sensor_active(NXT_PORT_S3); /* åıÉZÉìÉTê‘êFLEDÇON */
+	ecrobot_init_sonar_sensor(NXT_PORT_S2); /* í¥âπîgÉZÉìÉT(I2Cí êM)Çèâä˙âª */
+	nxt_motor_set_count(NXT_PORT_A, 0); /* äÆëSí‚é~ópÉÇÅ[É^ÉGÉìÉRÅ[É_ÉäÉZÉbÉg */
 }
 
 //*****************************************************************************
-// ÔøΩ÷êÔøΩÔøΩÔøΩ : ecrobot_device_terminate
-// ÔøΩÔøΩÔøΩÔøΩ : ÔøΩ»ÇÔøΩ
-// ÔøΩﬂÇÔøΩÔøΩl : ÔøΩ»ÇÔøΩ
-// ÔøΩTÔøΩv : ECROBOTÔøΩfÔøΩoÔøΩCÔøΩXÔøΩIÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩtÔøΩbÔøΩNÔøΩ÷êÔøΩ
+// ä÷êîñº : ecrobot_device_terminate
+// à¯êî : Ç»Çµ
+// ñﬂÇËíl : Ç»Çµ
+// äTóv : ECROBOTÉfÉoÉCÉXèIóπèàóùÉtÉbÉNä÷êî
 //*****************************************************************************
 void ecrobot_device_terminate()
 {
-	ecrobot_set_light_sensor_inactive(NXT_PORT_S3); /* ÔøΩÔøΩÔøΩZÔøΩÔøΩÔøΩTÔøΩ‘êFLEDÔøΩÔøΩOFF */
-	ecrobot_term_sonar_sensor(NXT_PORT_S2); /* ÔøΩÔøΩÔøΩÔøΩÔøΩgÔøΩZÔøΩÔøΩÔøΩT(I2CÔøΩ êM)ÔøΩÔøΩÔøΩIÔøΩÔøΩ */
+	ecrobot_set_light_sensor_inactive(NXT_PORT_S3); /* åıÉZÉìÉTê‘êFLEDÇOFF */
+	ecrobot_term_sonar_sensor(NXT_PORT_S2); /* í¥âπîgÉZÉìÉT(I2Cí êM)ÇèIóπ */
 }
 
 //*****************************************************************************
-// ÔøΩ÷êÔøΩÔøΩÔøΩ : user_1ms_isr_type2
-// ÔøΩÔøΩÔøΩÔøΩ : ÔøΩ»ÇÔøΩ
-// ÔøΩﬂÇÔøΩÔøΩl : ÔøΩ»ÇÔøΩ
-// ÔøΩTÔøΩv : 1msecÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩËçûÔøΩ›ÉtÔøΩbÔøΩNÔøΩ÷êÔøΩ(OSEK ISR type2ÔøΩJÔøΩeÔøΩSÔøΩÔøΩ)
+// ä÷êîñº : user_1ms_isr_type2
+// à¯êî : Ç»Çµ
+// ñﬂÇËíl : Ç»Çµ
+// äTóv : 1msecé¸ä˙äÑÇËçûÇ›ÉtÉbÉNä÷êî(OSEK ISR type2ÉJÉeÉSÉä)
 //*****************************************************************************
 void user_1ms_isr_type2(void){}
 
 //*****************************************************************************
-// ÔøΩ^ÔøΩXÔøΩNÔøΩÔøΩ : TaskMain
-// ÔøΩTÔøΩv : ÔøΩÔøΩÔøΩCÔøΩÔøΩÔøΩ^ÔøΩXÔøΩN
+// É^ÉXÉNñº : TaskMain
+// äTóv : ÉÅÉCÉìÉ^ÉXÉN
 //*****************************************************************************
-
-int num_touch = 0;
 TASK(TaskMain)
 {
-	signed char forward;      /* ÔøΩOÔøΩÔøΩÔøΩiÔøΩÔøΩÔøΩÔøΩ */
-	signed char turn;         /* ÔøΩÔøΩÔøΩÒñΩóÔøΩ */
-	signed char pwm_L, pwm_R; /* ÔøΩÔøΩÔøΩEÔøΩÔøΩÔøΩ[ÔøΩ^PWMÔøΩoÔøΩÔøΩ */
+	signed char forward;      /* ëOå„êiñΩóﬂ */
+	signed char turn;         /* ê˘âÒñΩóﬂ */
+	signed char pwm_L, pwm_R; /* ç∂âEÉÇÅ[É^PWMèoóÕ */
 
-	int gyro_offset;
-	int light_white;
-	int light_black;
+	signed int gyro_offset = 0;
+	unsigned int light_white = 0;
+	unsigned int light_black = 0;
 
-	int set = 0;
-	
-	int i = 0;
-	while(1)
+	signed int set = 0;
+	signed int gyro_set = 0;
+	signed int back_set = 0;
+	signed int num_touch = 0;
+	signed int back_gyro = 0;
+
+	while(1)//ÉZÉbÉgÉAÉbÉvÉGÉäÉA
 	{
-		//tail_control(TAIL_ANGLE_STAND_UP); /* ÔøΩÔøΩÔøΩSÔøΩÔøΩÔøΩ~ÔøΩpÔøΩpÔøΩxÔøΩ…êÔøΩÔøΩÔøΩ */
+		ecrobot_status_monitor("OSEK TEST001");
+
+		tail_control(TAIL_ANGLE_STAND_UP); /* äÆëSí‚é~ópäpìxÇ…êßå‰ *///ÉXÉ^Å[Égà íu
+
+		if(num_touch > 2){
+			tail_control(-TAIL_ANGLE_STAND_UP); /* äÆëSí‚é~ópäpìxÇ…êßå‰ */
+			set = 0;
+			break; /*ÉZÉbÉgÉAÉbÉväÆóπ */
+		}
 
 		if (ecrobot_get_touch_sensor(NXT_PORT_S4) == 1)
 		{
-
 			if(set == 0){
-				if(num_touch > 3){
-					break;
-				}
 				switch(num_touch){
 					case 0: 
 						light_white = ecrobot_get_light_sensor(NXT_PORT_S3);
-						ecrobot_sound_tone(440,10, 50);
+						ecrobot_sound_tone(370,10, 50);
 						num_touch++;
 						break;
 					case 1: 
-						light_black = ecrobot_get_light_sensor(NXT_PORT_S3)
-						ecrobot_sound_tone(440,10, 50);
+						light_black = ecrobot_get_light_sensor(NXT_PORT_S3);
+						ecrobot_sound_tone(415,10, 50);
 						num_touch++;
 						break;
 					case 2: 
-						tail_control(TAIL_ANGLE_STAND_UP);
-						do{
+						//tail_control(TAIL_ANGLE_STAND_UP); /* äÆëSí‚é~ópäpìxÇ…êßå‰ */
+						//for(int i=0;i<100;i++){
 							gyro_offset = ecrobot_get_gyro_sensor(NXT_PORT_S1);
-							ecrobot_sound_tone(440,10, 50);
-							i++;
-						}while(i<100);
+							ecrobot_sound_tone(466,10, 50);
+						//}
+						
 						num_touch++;
 						break;
 				}
 				set = 1;
 			}
-			 /* ÔøΩ^ÔøΩbÔøΩ`ÔøΩZÔøΩÔøΩÔøΩTÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÍÇΩ */
+		}else{
+			set = 0;
 		}
-		set = 0;
+	    
 		//1sec = 1000msec
-		systick_wait_ms(10); /* 10msecÔøΩEÔøΩFÔøΩCÔøΩg */
+		systick_wait_ms(10); 
 	}
 
-	balance_init();						/* ÔøΩ|ÔøΩÔøΩÔøΩUÔøΩqÔøΩÔøΩÔøΩ‰èâÔøΩÔøΩÔøΩÔøΩ */
-	nxt_motor_set_count(NXT_PORT_C, 0); /* ÔøΩÔøΩÔøΩÔøΩÔøΩ[ÔøΩ^ÔøΩGÔøΩÔøΩÔøΩRÔøΩ[ÔøΩ_ÔøΩÔøΩÔøΩZÔøΩbÔøΩg */
-	nxt_motor_set_count(NXT_PORT_B, 0); /* ÔøΩEÔøΩÔøΩÔøΩ[ÔøΩ^ÔøΩGÔøΩÔøΩÔøΩRÔøΩ[ÔøΩ_ÔøΩÔøΩÔøΩZÔøΩbÔøΩg */
+
+	//ÉÅÉCÉìÉGÉäÉA
+	balance_init();						/* ì|óßêUéqêßå‰èâä˙âª */
+	nxt_motor_set_count(NXT_PORT_C, 0); /* ç∂ÉÇÅ[É^ÉGÉìÉRÅ[É_ÉäÉZÉbÉg */
+	nxt_motor_set_count(NXT_PORT_B, 0); /* âEÉÇÅ[É^ÉGÉìÉRÅ[É_ÉäÉZÉbÉg */
 	while(1)
 	{
-		tail_control(TAIL_ANGLE_DRIVE); /* ÔøΩoÔøΩÔøΩÔøΩÔøΩÔøΩXÔøΩÔøΩÔøΩsÔøΩpÔøΩpÔøΩxÔøΩ…êÔøΩÔøΩÔøΩ */
+		ecrobot_status_monitor("OSEK TEST001");
 
-		if (sonar_alert() == 1) /* ÔøΩÔøΩÔøΩQÔøΩÔøΩÔøΩÔøΩÔøΩm */
-		{
-			forward = turn = 0; /* ÔøΩÔøΩÔøΩQÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩmÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ~ */
-		}
-		else
-		{
-			forward = 50; /* ÔøΩOÔøΩiÔøΩÔøΩÔøΩÔøΩ */
-			if (ecrobot_get_light_sensor(NXT_PORT_S3) <= (LIGHT_WHITE + LIGHT_BLACK)/2)
+		if(set == 0){
+			tail_control(TAIL_ANGLE_DRIVE); /* ÉoÉâÉìÉXëñçsópäpìxÇ…êßå‰ */
+
+			if(ecrobot_get_gyro_sensor(NXT_PORT_S1) > STOP_ETROBO){
+				ecrobot_sound_tone(247,2000, 50);
+				set = 1;
+				gyro_set = 0;
+		    }
+
+			if (sonar_alert() == 1) /* è·äQï®åüím */
 			{
-				turn = 50;  /* ÔøΩEÔøΩÔøΩÔøΩÒñΩóÔøΩ */
+				//forward = 0; /* è·äQï®ÇåüímÇµÇΩÇÁí‚é~ */
+				//turn = 0;
+				tail_control(90); 
+				
+				if(back_set <= 40){
+					back_gyro = -100;
+					forward = 0;
+					turn = 0;
+					back_set++;
+					gyro_set = 1;
+				}else{
+					nxt_motor_set_speed(NXT_PORT_C, 0, 1); // ç∂ÉÇÅ[É^PWMèoóÕÉZÉbÉg(-100Å`100)
+					nxt_motor_set_speed(NXT_PORT_B, 0, 1); // âEÉÇÅ[É^PWMèoóÕÉZÉbÉg(-100Å`100)
+					ecrobot_sound_tone(220,10, 50);
+					gyro_set = 0;
+				}
+				
+				/*
+				back_gyro = -100;
+
+				forward = 0;
+				turn = 0;
+
+				gyro_set = 1;
+				*/
+
+			}else{
+				back_gyro = 0;
+				back_set = 0;
+
+				
+				tail_control(TAIL_ANGLE_DRIVE); 
+			
+
+				forward = 50; /* ëOêiñΩóﬂ */
+				if (ecrobot_get_light_sensor(NXT_PORT_S3) <= (light_white + light_black)/2)
+				{
+					turn = 50;  /* âEê˘âÒñΩóﬂ */
+				}
+				else
+				{
+					turn = -50; /* ç∂ê˘âÒñΩóﬂ */
+				}
+
+				gyro_set = 1;
 			}
-			else
-			{
-				turn = -50; /* ÔøΩÔøΩÔøΩÔøΩÔøΩÒñΩóÔøΩ */
+
+			if(gyro_set == 1){
+				/* ì|óßêUéqêßå‰(forward = 0, turn = 0Ç≈ê√é~ÉoÉâÉìÉX) */
+				balance_control(
+					(float)forward,								 /* ëOå„êiñΩóﬂ(+:ëOêi, -:å„êi) */
+					(float)turn,								 /* ê˘âÒñΩóﬂ(+:âEê˘âÒ, -:ç∂ê˘âÒ) */
+					(float)ecrobot_get_gyro_sensor(NXT_PORT_S1), /* ÉWÉÉÉCÉçÉZÉìÉTíl */
+					(float)gyro_offset +(float)back_gyro,							 /* ÉWÉÉÉCÉçÉZÉìÉTÉIÉtÉZÉbÉgíl */
+					(float)nxt_motor_get_count(NXT_PORT_C),		 /* ç∂ÉÇÅ[É^âÒì]äpìx[deg] */
+					(float)nxt_motor_get_count(NXT_PORT_B),		 /* âEÉÇÅ[É^âÒì]äpìx[deg] */
+					(float)ecrobot_get_battery_voltage(),		 /* ÉoÉbÉeÉäìdà≥[mV] */
+					&pwm_L,										 /* ç∂ÉÇÅ[É^PWMèoóÕíl */
+					&pwm_R);									 /* âEÉÇÅ[É^PWMèoóÕíl */
+
+				nxt_motor_set_speed(NXT_PORT_C, pwm_L, 1); /* ç∂ÉÇÅ[É^PWMèoóÕÉZÉbÉg(-100Å`100) */
+				nxt_motor_set_speed(NXT_PORT_B, pwm_R, 1); /* âEÉÇÅ[É^PWMèoóÕÉZÉbÉg(-100Å`100) */
 			}
+			
+		}else{
+			nxt_motor_set_speed(NXT_PORT_C, 0, 1); /* ç∂ÉÇÅ[É^PWMèoóÕÉZÉbÉg(-100Å`100) */
+			nxt_motor_set_speed(NXT_PORT_B, 0, 1); /* âEÉÇÅ[É^PWMèoóÕÉZÉbÉg(-100Å`100) */
 		}
 
-		/* ÔøΩ|ÔøΩÔøΩÔøΩUÔøΩqÔøΩÔøΩÔøΩÔøΩ(forward = 0, turn = 0ÔøΩ≈ê√é~ÔøΩoÔøΩÔøΩÔøΩÔøΩÔøΩX) */
-		balance_control(
-			(float)forward,								 /* ÔøΩOÔøΩÔøΩÔøΩiÔøΩÔøΩÔøΩÔøΩ(+:ÔøΩOÔøΩi, -:ÔøΩÔøΩÔøΩi) */
-			(float)turn,								 /* ÔøΩÔøΩÔøΩÒñΩóÔøΩ(+:ÔøΩEÔøΩÔøΩÔøΩÔøΩ, -:ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ) */
-			(float)ecrobot_get_gyro_sensor(NXT_PORT_S1), /* ÔøΩWÔøΩÔøΩÔøΩCÔøΩÔøΩÔøΩZÔøΩÔøΩÔøΩTÔøΩl */
-			(float)gyro_offset,							 /* ÔøΩWÔøΩÔøΩÔøΩCÔøΩÔøΩÔøΩZÔøΩÔøΩÔøΩTÔøΩIÔøΩtÔøΩZÔøΩbÔøΩgÔøΩl */
-			(float)nxt_motor_get_count(NXT_PORT_C),		 /* ÔøΩÔøΩÔøΩÔøΩÔøΩ[ÔøΩ^ÔøΩÔøΩÔøΩ]ÔøΩpÔøΩx[deg] */
-			(float)nxt_motor_get_count(NXT_PORT_B),		 /* ÔøΩEÔøΩÔøΩÔøΩ[ÔøΩ^ÔøΩÔøΩÔøΩ]ÔøΩpÔøΩx[deg] */
-			(float)ecrobot_get_battery_voltage(),		 /* ÔøΩoÔøΩbÔøΩeÔøΩÔøΩÔøΩdÔøΩÔøΩ[mV] */
-			&pwm_L,										 /* ÔøΩÔøΩÔøΩÔøΩÔøΩ[ÔøΩ^PWMÔøΩoÔøΩÕíl */
-			&pwm_R);									 /* ÔøΩEÔøΩÔøΩÔøΩ[ÔøΩ^PWMÔøΩoÔøΩÕíl */
-		nxt_motor_set_speed(NXT_PORT_C, pwm_L, 1); /* ÔøΩÔøΩÔøΩÔøΩÔøΩ[ÔøΩ^PWMÔøΩoÔøΩÕÉZÔøΩbÔøΩg(-100ÔøΩ`100) */
-		nxt_motor_set_speed(NXT_PORT_B, pwm_R, 1); /* ÔøΩEÔøΩÔøΩÔøΩ[ÔøΩ^PWMÔøΩoÔøΩÕÉZÔøΩbÔøΩg(-100ÔøΩ`100) */
-
-		systick_wait_ms(4); /* 4msecÔøΩEÔøΩFÔøΩCÔøΩg */
+		systick_wait_ms(4); /* 4msecÉEÉFÉCÉg */
 	}
 }
 
 //*****************************************************************************
-// ÔøΩ÷êÔøΩÔøΩÔøΩ : sonar_alert
-// ÔøΩÔøΩÔøΩÔøΩ : ÔøΩÔøΩÔøΩÔøΩ
-// ÔøΩ‘ÇÔøΩÔøΩl : 1(ÔøΩÔøΩÔøΩQÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ)/0(ÔøΩÔøΩÔøΩQÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ)
-// ÔøΩTÔøΩv : ÔøΩÔøΩÔøΩÔøΩÔøΩgÔøΩZÔøΩÔøΩÔøΩTÔøΩ…ÇÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩQÔøΩÔøΩÔøΩÔøΩÔøΩm
+// ä÷êîñº : sonar_alert
+// à¯êî : ñ≥Çµ
+// ï‘ÇËíl : 1(è·äQï®Ç†ÇË)/0(è·äQï®ñ≥Çµ)
+// äTóv : í¥âπîgÉZÉìÉTÇ…ÇÊÇÈè·äQï®åüím
 //*****************************************************************************
 static int sonar_alert(void)
 {
@@ -195,20 +239,20 @@ static int sonar_alert(void)
 
 	signed int distance;
 
-	if (++counter == 40/4) /* ÔøΩÔøΩ40msecÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ…èÔøΩÔøΩQÔøΩÔøΩÔøΩÔøΩÔøΩm  */
+	if (++counter == 40/4) /* ñÒ40msecé¸ä˙ñàÇ…è·äQï®åüím  */
 	{
 		/*
-		 * ÔøΩÔøΩÔøΩÔøΩÔøΩgÔøΩZÔøΩÔøΩÔøΩTÔøΩ…ÇÔøΩÔøΩÈãóÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÕÅAÔøΩÔøΩÔøΩÔøΩÔøΩgÔøΩÃåÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ…àÀëÔøΩÔøΩÔøΩÔøΩ‹ÇÔøΩÔøΩB
-		 * NXTÔøΩÃèÍçáÔøΩÕÅA40msecÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩxÔøΩÔøΩÔøΩoÔøΩÔøΩÔøΩÔøΩÔøΩÃç≈íZÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ≈ÇÔøΩÔøΩB
+		 * í¥âπîgÉZÉìÉTÇ…ÇÊÇÈãóó£ë™íËé¸ä˙ÇÕÅAí¥âπîgÇÃå∏êäì¡ê´Ç…àÀë∂ÇµÇ‹Ç∑ÅB
+		 * NXTÇÃèÍçáÇÕÅA40msecé¸ä˙íˆìxÇ™åoå±è„ÇÃç≈íZë™íËé¸ä˙Ç≈Ç∑ÅB
 		 */
 		distance = ecrobot_get_sonar_sensor(NXT_PORT_S2);
 		if ((distance <= SONAR_ALERT_DISTANCE) && (distance >= 0))
 		{
-			alert = 1; /* ÔøΩÔøΩÔøΩQÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩm */
+			alert = 1; /* è·äQï®Çåüím */
 		}
 		else
 		{
-			alert = 0; /* ÔøΩÔøΩÔøΩQÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ */
+			alert = 0; /* è·äQï®ñ≥Çµ */
 		}
 		counter = 0;
 	}
@@ -217,15 +261,15 @@ static int sonar_alert(void)
 }
 
 //*****************************************************************************
-// ÔøΩ÷êÔøΩÔøΩÔøΩ : tail_control
-// ÔøΩÔøΩÔøΩÔøΩ  : angle (ÔøΩÔøΩÔøΩ[ÔøΩ^ÔøΩ⁄ïWÔøΩpÔøΩx[ÔøΩx])
-// ÔøΩ‘ÇÔøΩÔøΩl : ÔøΩÔøΩÔøΩÔøΩ
-// ÔøΩTÔøΩv : ÔøΩÔøΩÔøΩsÔøΩÃäÔøΩÔøΩSÔøΩÔøΩÔøΩ~ÔøΩpÔøΩÔøΩÔøΩ[ÔøΩ^ÔøΩÃäpÔøΩxÔøΩÔøΩÔøΩÔøΩ
+// ä÷êîñº : tail_control
+// à¯êî  : angle (ÉÇÅ[É^ñ⁄ïWäpìx[ìx])
+// ï‘ÇËíl : ñ≥Çµ
+// äTóv : ëñçsëÃäÆëSí‚é~ópÉÇÅ[É^ÇÃäpìxêßå‰
 //*****************************************************************************
 static void tail_control(signed int angle)
 {
-	float pwm = (float)(angle - nxt_motor_get_count(NXT_PORT_A))*P_GAIN; /* ÔøΩÔøΩÔøΩ·êßÔøΩÔøΩ */
-	/* PWMÔøΩoÔøΩÕñOÔøΩaÔøΩÔøΩÔøΩÔøΩ */
+	float pwm = (float)(angle - nxt_motor_get_count(NXT_PORT_A))*P_GAIN; /* î‰ó·êßå‰ */
+	/* PWMèoóÕñOòaèàóù */
 	if (pwm > PWM_ABS_MAX)
 	{
 		pwm = PWM_ABS_MAX;
