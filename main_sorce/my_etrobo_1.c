@@ -84,25 +84,18 @@ TASK(TaskMain)
 	unsigned int light_black = 0;
 
 	signed int set = 0;
+	signed int gyro_set = 0;
+	signed int back_set = 0;
 	signed int num_touch = 0;
-
-	signed int stop = 0;
-	signed int time = 0;
 	signed int back_gyro = 0;
-	signed int count = 0;
-	signed int look_up_count = 0;
 
-	signed int count_tail = 0;
-
-	signed int control = 0;
-
-	signed int sonar = 0;
-
+	signed int loop_c = 0;
+	signed int f = 0;
 	while(1)//セットアップエリア
 	{
 		ecrobot_status_monitor("OSEK TEST001");
 
-		tail_control(TAIL_ANGLE_STAND_UP); /* 完全停止用角度に制御 */
+		tail_control(TAIL_ANGLE_STAND_UP); /* 完全停止用角度に制御 *///スタート位置
 
 		if(num_touch > 2){
 			tail_control(-TAIL_ANGLE_STAND_UP); /* 完全停止用角度に制御 */
@@ -145,109 +138,86 @@ TASK(TaskMain)
 	}
 
 
-	
-
 	//メインエリア
 	balance_init();						/* 倒立振子制御初期化 */
 	nxt_motor_set_count(NXT_PORT_C, 0); /* 左モータエンコーダリセット */
 	nxt_motor_set_count(NXT_PORT_B, 0); /* 右モータエンコーダリセット */
 	while(1)
 	{
-		
+		ecrobot_status_monitor("OSEK TEST001");
 
 		if(set == 0){
-			
+			tail_control(TAIL_ANGLE_DRIVE); /* バランス走行用角度に制御 */
 
 			if(ecrobot_get_gyro_sensor(NXT_PORT_S1) > STOP_ETROBO){
 				ecrobot_sound_tone(247,2000, 50);
 				set = 1;
+				gyro_set = 0;
 		    }
 
-			
 			if (sonar_alert() == 1) /* 障害物検知 */
 			{
-				count_tail = 0;
-
-
-				tail_control(90);
+				//forward = 0; /* 障害物を検知したら停止 */
+				//turn = 0;
+				tail_control(90); 
 				
-				if(count<40){
-					//back_gyro = -100;
-					forward = -20;
+				if(back_set <= 40){
+					back_gyro = -100;
+					forward = 0;
 					turn = 0;
-					ecrobot_sound_tone(50,2000, 50);
-					count++;
-					control = 0;
+					back_set++;
+					gyro_set = 1;//倒立制御ON
 				}else{
-					ecrobot_sound_tone(247,2000, 50);
-					nxt_motor_set_speed(NXT_PORT_C, 20, 1); //左モータPWM出力セット(-100～100) 
-					nxt_motor_set_speed(NXT_PORT_B, 20, 1);
-					control = 1;
-					sonar=1;
+					nxt_motor_set_speed(NXT_PORT_C, 0, 1); // 左モータPWM出力セット(-100～100)
+					nxt_motor_set_speed(NXT_PORT_B, 0, 1); // 右モータPWM出力セット(-100～100)
+					ecrobot_sound_tone(220,10, 50);
+					gyro_set = 0;//倒立制御OFF
 				}
 
 			}else{
-				if(sonar==1){
-					if(look_up_count<400){
-						ecrobot_sound_tone(500,2000, 50);
-						tail_control(80);
-
-						ecrobot_sound_tone(247,2000, 50);
-						nxt_motor_set_speed(NXT_PORT_C, -20, 1); /* 左モータPWM出力セット(-100～100) */
-						nxt_motor_set_speed(NXT_PORT_B, -20, 1);
-						control = 1;
-						look_up_count++;
-					}else{
-						tail_control(80);
-						ecrobot_sound_tone(300,2000, 50);
-						look_up_count = 0;
-						sonar = 0;
-						count = 0;
+				if(back_set != 0 ){
+					while(1){
+						if(loop_c <= 100){
+							tail_control(110); 
+								//nxt_motor_set_speed(NXT_PORT_C, 20, 1); // 左モータPWM出力セット(-100～100)
+								//nxt_motor_set_speed(NXT_PORT_B, 20, 1); // 右モータPWM出力セット(-100～100)
+							ecrobot_sound_tone(500,10, 50);
+							loop_c++;
+						}else{
+							gyro_set = 1;
+							back_gyro = 0;//ジャイロオフセット
+							break;
+						}
+						systick_wait_ms(10); /* 10msecウェイト */
 					}
 				}else{
-					if(control ==1 &&count_tail<100){
-						tail_control(100);
-						nxt_motor_set_speed(NXT_PORT_C, -30, 1); /* 左モータPWM出力セット(-100～100) */
-						nxt_motor_set_speed(NXT_PORT_B, -30, 1);
-						control = 1;
-						count_tail++;
-					}else{
-						control = 0;
-						tail_control(TAIL_ANGLE_DRIVE); /* バランス走行用角度に制御 */
-						forward = 25;
-						if (ecrobot_get_light_sensor(NXT_PORT_S3) <= (light_white + light_black)/2)
-						{
-							turn = 25;  /* 右旋回命令 */
-						}
-						else
-						{
-							turn = -25; /* 左旋回命令 */
-						}
+					tail_control(TAIL_ANGLE_DRIVE); 
+
+					forward = 50; /* 前進命令 */
+					if (ecrobot_get_light_sensor(NXT_PORT_S3) <= (light_white + light_black)/2)
+					{
+						turn = 30;  /* 右旋回命令 */
+					}
+					else
+					{
+						turn = -30; /* 左旋回命令 */
 					}
 
-					ecrobot_status_monitor("OSEK TEST001");
-					back_gyro = 0;
-					//forward = 25; /* 前進命令 */
+					/* 倒立振子制御(forward = 0, turn = 0で静止バランス) */
+					balance_control(
+						(float)forward,								 /* 前後進命令(+:前進, -:後進) */
+						(float)turn,								 /* 旋回命令(+:右旋回, -:左旋回) */
+						(float)ecrobot_get_gyro_sensor(NXT_PORT_S1), /* ジャイロセンサ値 */
+						(float)gyro_offset +(float)back_gyro,							 /* ジャイロセンサオフセット値 */
+						(float)nxt_motor_get_count(NXT_PORT_C),		 /* 左モータ回転角度[deg] */
+						(float)nxt_motor_get_count(NXT_PORT_B),		 /* 右モータ回転角度[deg] */
+						(float)ecrobot_get_battery_voltage(),		 /* バッテリ電圧[mV] */
+						&pwm_L,										 /* 左モータPWM出力値 */
+						&pwm_R);									 /* 右モータPWM出力値 */
 
+					nxt_motor_set_speed(NXT_PORT_C, pwm_L, 1); /* 左モータPWM出力セット(-100～100) */
+					nxt_motor_set_speed(NXT_PORT_B, pwm_R, 1); /* 右モータPWM出力セット(-100～100) */
 				}
-
-			}
-
-			/* 倒立振子制御(forward = 0, turn = 0で静止バランス) */
-		if(control == 0){
-			balance_control(
-				(float)forward,								 /* 前後進命令(+:前進, -:後進) */
-				(float)turn,								 /* 旋回命令(+:右旋回, -:左旋回) */
-				(float)ecrobot_get_gyro_sensor(NXT_PORT_S1), /* ジャイロセンサ値 */
-				(float)gyro_offset,							 /* ジャイロセンサオフセット値 */
-				(float)nxt_motor_get_count(NXT_PORT_C),		 /* 左モータ回転角度[deg] */
-				(float)nxt_motor_get_count(NXT_PORT_B),		 /* 右モータ回転角度[deg] */
-				(float)ecrobot_get_battery_voltage(),		 /* バッテリ電圧[mV] */
-				&pwm_L,										 /* 左モータPWM出力値 */
-				&pwm_R);									 /* 右モータPWM出力値 */
-
-			nxt_motor_set_speed(NXT_PORT_C, pwm_L, 1); /* 左モータPWM出力セット(-100～100) */
-			nxt_motor_set_speed(NXT_PORT_B, pwm_R, 1); /* 右モータPWM出力セット(-100～100) */
 			}
 		}else{
 			nxt_motor_set_speed(NXT_PORT_C, 0, 1); /* 左モータPWM出力セット(-100～100) */
@@ -257,7 +227,6 @@ TASK(TaskMain)
 		systick_wait_ms(4); /* 4msecウェイト */
 	}
 }
-
 
 //*****************************************************************************
 // 関数名 : sonar_alert
