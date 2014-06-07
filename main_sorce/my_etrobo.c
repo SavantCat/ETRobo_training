@@ -179,31 +179,45 @@ TASK(TaskMain)
 					count++;
 					control = 0;
 				}else{
-					ecrobot_sound_tone(247,2000, 50);
-					nxt_motor_set_speed(NXT_PORT_C, 20, 1); //左モータPWM出力セット(-100～100) 
-					nxt_motor_set_speed(NXT_PORT_B, 20, 1);
+					do{
+						tail_control(90);
+						ecrobot_sound_tone(247,2000, 50);
+						nxt_motor_set_speed(NXT_PORT_C, 20, 1); //左モータPWM出力セット(-100～100) 
+						nxt_motor_set_speed(NXT_PORT_B, 20, 1);
+						time++;
+						systick_wait_ms(1); /* 4msecウェイト */
+					}while(time<1600);
+					time = 0;
+					do{
+						ecrobot_sound_tone(247,2000, 50);
+						tail_control(90);
+						nxt_motor_set_speed(NXT_PORT_C, -20, 1); /* 左モータPWM出力セット(-100～100) */
+						nxt_motor_set_speed(NXT_PORT_B, -20, 1);
+						time++;
+						systick_wait_ms(1); /* 4msecウェイト */
+					}while(time<1600);
+					time = 0;
+
+					do{
+						tail_control(90);
+						ecrobot_sound_tone(247,2000, 50);
+						nxt_motor_set_speed(NXT_PORT_C, 20, 1); //左モータPWM出力セット(-100～100) 
+						nxt_motor_set_speed(NXT_PORT_B, 20, 1);
+						time++;
+						systick_wait_ms(1); /* 4msecウェイト */
+					}while(time<2000);
 					control = 1;
-					sonar=1;
+					sonar = 1;
+					count = 0;
 				}
 
 			}else{
 				if(sonar==1){
-					if(look_up_count<400){
-						ecrobot_sound_tone(500,2000, 50);
-						tail_control(80);
-
-						ecrobot_sound_tone(247,2000, 50);
-						nxt_motor_set_speed(NXT_PORT_C, -20, 1); /* 左モータPWM出力セット(-100～100) */
-						nxt_motor_set_speed(NXT_PORT_B, -20, 1);
-						control = 1;
-						look_up_count++;
-					}else{
-						tail_control(80);
-						ecrobot_sound_tone(300,2000, 50);
-						look_up_count = 0;
-						sonar = 0;
-						count = 0;
-					}
+					
+					control = 1;
+					sonar = 0;
+					count = 0;
+					time = 0;
 				}else{
 					if(control ==1 &&count_tail<100){
 						tail_control(100);
